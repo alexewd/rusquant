@@ -10,7 +10,8 @@
 \alias{getSymbols.Forts}
 \title{Load and manage market data}
 \usage{
-getSymbols(Symbols = NULL, from='2007-01-01', to = Sys.Date(), src = "yahoo", period = "day")
+getSymbols(Symbols = NULL, from='2007-01-01', to = Sys.Date(),
+                  src = "yahoo", period = "day")
 
 getSymbols.Poloniex(Symbols, env, return.class = "xts",
   index.class = "Date", from = "2007-01-01", to = Sys.Date(),
