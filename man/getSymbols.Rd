@@ -57,5 +57,7 @@ Finam, mfd, rogov, oanda, google. Current period methods available are:
 sec, hour, day, week, month, year.
 }
 \examples{
+\dontrun{
 getSymbols('AFLT', src='Finam')
+}
 }

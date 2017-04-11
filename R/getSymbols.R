@@ -16,8 +16,11 @@
 #' mfd, rogov, oanda, google).
 #' @param period calendar periods for Finam ("tick", "secs", "seconds", "mins",
 #' "hours", "days", "weeks", "months", "quarters", "years").
+#' @importFrom quantmod getSymbols
 #' @examples
+#' \dontrun{
 #' getSymbols('AFLT', src='Finam')
+#' }
 NULL
 
 #' @rdname getSymbols
@@ -720,6 +723,7 @@ NULL
 
 #' @rdname getSymbols
 #' @importFrom xts xts as.xts
+#' @importFrom utils data
 #' @export
 "getSymbols.mfd" <-
   function(Symbols,
@@ -780,7 +784,8 @@ NULL
       Symbols.name <- getSymbolLookup()[[Symbols[[i]]]]$name
       Symbols.name <-
         ifelse(is.null(Symbols.name), Symbols[[i]], Symbols.name)
-      #data("tickers")
+      tickers <- NULL
+      data("tickers", envir = environment())
       SYMBOL.GROUP <- tickers[which(tickers[, 4] == Symbols), 1]
       SYMBOL.ID <- tickers[which(tickers[, 4] == Symbols), 3]
 
