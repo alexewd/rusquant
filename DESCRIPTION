@@ -8,7 +8,7 @@ Depends: quantmod
 Imports: xts, zoo, timeSeries
 Maintainer: Sergey Edunov <edunov@gmail.com>, Vyacheslav Arbuzov <arbuzov1989@gmail.com>
 Description: This is an extension for quantmod framework to simplify working with Russian stock market.
-LazyLoad: yes
+LazyData: true
 License: GPL-3
 URL: http://www.algorithmist.ru/search/label/rusquant
         http://r-forge.r-project.org/projects/rusquant
