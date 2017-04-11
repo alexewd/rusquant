@@ -19,7 +19,7 @@
     return(res[complete.cases(res),])
 }
 
-
+#' @export
 "getAllDividends" <- function(allYears=FALSE){
     modern <- getDividendsInternal('http://gmi.troika.ru/eth/dividends/dividends.csv')
     if (allYears){
@@ -28,6 +28,3 @@
     }
     return(modern)
 }
-
-
-

@@ -1,3 +1,4 @@
+#' @export
 "getOptionChain.Forts" <-
 function(Symbols, Exp, session='MAIN', verbose=FALSE)
 {
@@ -37,6 +38,4 @@ function(Symbols, Exp, session='MAIN', verbose=FALSE)
      rownames(puts) <- rnames
 
      list(calls=calls, puts=puts)
-
 }
-

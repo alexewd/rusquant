@@ -1,3 +1,27 @@
+#' @name getSymbols
+#' @title Load and manage market data
+#' @rdname getSymbols
+#' @usage getSymbols(Symbols = NULL, from='2007-01-01', to = Sys.Date(), src = "yahoo", period = "day")
+#' @description
+#' Function to load and manage data. Current src methods available are: yahoo,
+#' Finam, mfd, rogov, oanda, google. Current period methods available are:
+#' sec, hour, day, week, month, year.
+#'
+#' @param Symbols a character vector specifying the names of each symbol
+#' (ticker) to be loaded.
+#' @param from start date of analyzing period.
+#' @param to end date of analyzing period.
+#' @param src character string specifying sourcing method (only yahoo, Finam,
+#' mfd, rogov, oanda, google).
+#' @param period calendar periods for Finam ("tick", "secs", "seconds", "mins",
+#' "hours", "days", "weeks", "months", "quarters", "years").
+#' @examples
+#' getSymbols('AFLT', src='Finam')
+NULL
+
+#' @rdname getSymbols
+#' @importFrom xts xts as.xts
+#' @export
 #function retrives data from poloniex through its public API
 "getSymbols.Poloniex" <- function #S3 function (Poloniex is a class of first argument)
 (Symbols,env,return.class='xts',index.class='Date',
@@ -21,7 +45,7 @@
 
 	if(missing(verbose)) verbose <- TRUE
 	if(missing(auto.assign)) auto.assign <- FALSE
-	
+
 	Polo.period <- 0
 	Polo.max_candles <- 1000
 	Polo.from <- as.numeric(as.POSIXct(from)) #convert to UNIX timestamp
@@ -52,7 +76,7 @@
 
 	#example API usage
 	#"https://poloniex.com/public?command=returnChartData&currencyPair=USDT_BTC&period=7200&start=1468711470&end=1468757470"
-	
+
 	for(i in 1:length(Symbols)) {
 		Polo.url <- paste(Polo.downloadUrl,
                         "&currencyPair=", Symbols[[i]],
@@ -63,20 +87,20 @@
 		download.file(Polo.url, destfile = tmp, quiet = TRUE) #get JSON object
 		rawdata <- readLines(tmp) #read raw data from file
 		if(substr(rawdata, 3, 7) == 'error') {
-		  
+
 		  stop(paste('Error!', substr(rawdata, 11, nchar(rawdata) - 2)))
 		}
-		
+
 		#parsing JSON object
 		str_obs <- strsplit(rawdata, split = "},{", fixed = TRUE)
 		str_obs[[1]][1] <- substr(str_obs[[1]][1], 3, nchar(str_obs[[1]][1]))
 		temp <- str_obs[[1]][length(str_obs[[1]])]
 		substr(temp, 1, nchar(temp)-2) -> str_obs[[1]][length(str_obs[[1]])]
-		
+
 		ticker_header <- c('date', 'high', 'low', 'open', 'close', 'volume')
 		ticker_length <- length(ticker_header)
 		lst <- list()
-		
+
 		for(j in 1:length(str_obs[[1]])) {
 		  str <- str_obs[[1]][j]
 		  str_par <- strsplit(str, ",", fixed = TRUE)
@@ -84,26 +108,26 @@
 		  for(k in 1:ticker_length){
 		    vec_row <- append(vec_row, values = substr(str_par[[1]][k], 4+nchar(ticker_header[k]), nchar(str_par[[1]][k])))
 		  }
-		  
+
 		  lst[[length(lst)+1]] <- vec_row
 		}
-		
+
 		res <- do.call(rbind.data.frame, lst)
 		names(res) <- ticker_header
-		
+
 		nts <- xts(apply(res[,2:length(res)], 2, as.numeric),
 		           as.POSIXct(as.numeric(as.character(res[, 1])), origin="1970-01-01", tz ="GMT"))
-		
+
 		fr <- convert.time.series(fr=nts, return.class=return.class)
-		
+
 		Symbols[[i]] <-toupper(gsub('\\^','',Symbols[[i]]))
-		
+
 		if(auto.assign){
 		  assign(Symbols[[i]], fr, env)
 		}
-		
+
 	}
-	
+
 	if(auto.assign){
 		return(Symbols)
 	}
@@ -111,6 +135,9 @@
 	return(fr)
 }
 
+#' @rdname getSymbols
+#' @importFrom xts xts as.xts
+#' @export
 #function retrives data from alortrade broker
 "getSymbols.Alor" <- function #S3 function (Alor is a class of first argument)
 (Symbols,env,return.class='xts',index.class='Date',
@@ -126,23 +153,23 @@
     # import all named elements that are NON formals
     assign(var, list(...)[[var]], local_env)
   }
-  
+
   options(warn = -1)
   default.return.class <- return.class
   default.from <- from
   default.to <- to
-  
+
   if(missing(verbose)) verbose <- TRUE
   if(missing(auto.assign)) auto.assign <- FALSE
   board <- "MICEX" #data is grabbed from Moscow Exchange by default
-  
+
   Alor.period <- 0
   Alor.max_candles <- 1000
   Alor.from <- as.POSIXct(from)
   Alor.to <- as.POSIXct(to)
-  
+
   Alor.downloadUrl <- 'http://history.alor.ru/?'
-  
+
   switch(period, #select candle period according to data frequency
          'tick' = {
            Alor.period <- 0
@@ -172,12 +199,12 @@
            Alor.period <- 1440
          }
   )
-  
+
   #example of request
   #http://history.alor.ru/?board=MICEX&ticker=LKOH&period=5&from=2016-03-21&to=2016-07-12&bars=5
-  
+
   result <- as.null()
-  
+
   for(i in 1:length(Symbols)) {
     #building request to a REST service
     #bypassing 1000 obs restriction
@@ -189,7 +216,7 @@
                         "&from=", Alor.from,
                         "&to=", Alor.to,
                         "&bars=",Alor.max_candles)
-      
+
       temp <- tempfile()
       download.file(Alor.url, destfile = temp, quiet = TRUE) #request to a service
       #reading result as a table
@@ -197,40 +224,41 @@
       res$Date <- paste(res$Date, " ", res$Time) #merge time a date columns
       res[,!(names(res) == 'Time')] #remove time column
       unlink(temp) #release resource
-      
+
       #if responce returns same date break a loop
       if(!is.null(result)){
         if(result$Date[1] == res$Date[nrow(res)]){
           break;
         }
       }
-      
+
       Alor.to <- as.POSIXct(res$Date[nrow(res)]) + Alor.period * 60 #update a date of observation
       result <- if(is.null(result)) res[order(res$Date), ] else merge(result, res, all=TRUE)
-      
+
       Sys.sleep(0.01) #delay between requests
     }
-    
+
     #build xts time series
     newts <- xts(apply(result[,3:length(result)], 2, as.numeric) , as.POSIXct(result[, 1]))
     fr <- convert.time.series(fr=newts,return.class=return.class)
-    
+
     Symbols[[i]] <-toupper(gsub('\\^','',Symbols[[i]]))
-    
+
     if(auto.assign){
       assign(Symbols[[i]], fr, env)
     }
   }
-  
+
   if(auto.assign){
     return(Symbols)
   }
-  
+
   return(fr)
 }
 
-
-
+#' @rdname getSymbols
+#' @importFrom xts xts as.xts
+#' @export
 "getSymbols.rogov" <-
 function(Symbols,env,return.class='xts',index.class='Date',
          from='2007-01-01',
@@ -254,24 +282,24 @@ function(Symbols,env,return.class='xts',index.class='Date',
      if(missing(auto.assign)) auto.assign <- FALSE
 
      p <- 0
-     if ("hour" == period) 
+     if ("hour" == period)
 		 {
-		 p <- 'Hourly' 
+		 p <- 'Hourly'
 		 limit<-16000
 		 }
-	if ("day" == period) 
+	if ("day" == period)
 		 {
-		 p <- 'Daily' 
+		 p <- 'Daily'
 		 limit<-16000
 		 }
-    if ("week" == period) 
+    if ("week" == period)
 		{
-		p <- 'Weekly' 
+		p <- 'Weekly'
 		limit<-10000
 		}
     if ("month" == period)
 		{
-		p <- 'Monthly' 
+		p <- 'Monthly'
 		limit<-1000
 		}
 	if ("year" == period)
@@ -279,19 +307,19 @@ function(Symbols,env,return.class='xts',index.class='Date',
 		p <- 'Annually'
 		limit<-100
 		}
-    if (p==0) 
+    if (p==0)
 		 {
 			message(paste("Unkown period ", period))
 		 }
-  
+
 	format(as.Date(from),"%m.%d.%Y")->rogov.from
 	format(as.Date(to),"%m.%d.%Y")->rogov.to
-for(i in 1:length(Symbols)) {	
-	rogov.URL<-"http://www.rogovindex.com/Quote/searchentries?rogovindex.period="	
+for(i in 1:length(Symbols)) {
+	rogov.URL<-"http://www.rogovindex.com/Quote/searchentries?rogovindex.period="
 	stock.URL <- paste(rogov.URL,p,"&limit=",limit,"&RegionFromDate=",rogov.from,"&regiontodate=",rogov.to,sep="")
 	tmp <- tempfile()
     download.file(stock.URL, destfile=tmp,quiet=TRUE)
-    fr <- read.table(tmp, sep="{",header=FALSE)	 
+    fr <- read.table(tmp, sep="{",header=FALSE)
 	as.character(unlist(fr[3:length(fr)]))->fr
 	gsub("ValueDateString:", "", fr)->fr
 	gsub("BaseValue:", "", fr)->fr
@@ -300,28 +328,28 @@ for(i in 1:length(Symbols)) {
 	gsub("RValue:", "", fr)->fr
 	gsub("YValue:", "", fr)->fr
 	gsub("},", "", fr)->fr
-	gsub("}]}", "", fr)->fr		
+	gsub("}]}", "", fr)->fr
 	t(as.data.frame(strsplit(fr,",")))->fr
- 
-    unlink(tmp)	 	 
-    
-	if(p=='Hourly')       
+
+    unlink(tmp)
+
+	if(p=='Hourly')
 		{
 		fr <- xts(apply(as.matrix(fr[,2:6]),2, as.numeric), as.POSIXct(strptime(fr[,1], "%m/%d/%Y %I:%M:%S %p")),src='rogov',updated=Sys.time())
 		colnames(fr) <- c('Base Value','F Value','B Value','R Value','Y Value')
 		}
-	if(p=='Monthly')       
+	if(p=='Monthly')
 		{
 		fr <- xts(apply(as.matrix(fr[,2:6]),2, as.numeric), as.Date(strptime(paste("01/",fr[,1],sep=""), "%d/%m/%Y")),src='rogov',updated=Sys.time())
 		colnames(fr) <- c('Base Value','F Value','B Value','R Value','Y Value')
-		} 
-	if(p=='Annually')       
+		}
+	if(p=='Annually')
 		{
 		fr <- xts(apply(as.matrix(fr[,2:6]),2, as.numeric), as.Date(strptime(paste("01/01/",fr[,1],sep=""), "%d/%m/%Y")),src='rogov',updated=Sys.time())
 		colnames(fr) <- c('Base Value','F Value','B Value','R Value','Y Value')
-		} 	 
-	 
-    if(p=='Daily' | p=='Weekly')       
+		}
+
+    if(p=='Daily' | p=='Weekly')
 		{
 		fr <- xts(apply(as.matrix(fr[,2:6]),2, as.numeric), as.Date(strptime(fr[,1], "%m/%d/%Y")),src='rogov',updated=Sys.time())
 		colnames(fr) <- c('Base Value','F Value','B Value','R Value','Y Value')
@@ -365,11 +393,14 @@ for(i in 1:length(Symbols)) {
 	 #print('from your use of our services.')
      if(auto.assign)
        return(Symbols)
-	
-	
+
+
     return(fr)
 }
 
+#' @rdname getSymbols
+#' @importFrom xts xts as.xts
+#' @export
 "getSymbols.Finam" <-
 function(Symbols,env,return.class='xts',index.class='Date',
          from='2007-01-01',
@@ -407,7 +438,7 @@ function(Symbols,env,return.class='xts',index.class='Date',
 
      if (p==0) {
         message(paste("Unkown period ", period))
-     }	 
+     }
      finam.HOST <- 'export.finam.ru'
      finam.URL <- "/table.csv?d=d&market=1&f=table&e=.csv&dtf=1&tmf=1&MSOR=0&sep=1&sep2=1&at=1&"
 
@@ -488,7 +519,7 @@ function(Symbols,env,return.class='xts',index.class='Date',
                              sep='.')
        }
 
-   
+
        fr <- convert.time.series(fr=fr,return.class=return.class)
        if(is.xts(fr) && p>7)
          indexClass(fr) <- index.class
@@ -508,7 +539,9 @@ function(Symbols,env,return.class='xts',index.class='Date',
 
 }
 
-
+#' @rdname getSymbols
+#' @importFrom xts xts as.xts
+#' @export
 "getSymbols.mfd" <-
 function(Symbols,env,return.class='xts',index.class='Date',
          from='2007-01-01',
@@ -548,7 +581,7 @@ function(Symbols,env,return.class='xts',index.class='Date',
         message(paste("Unkown period ", period))
      }
     for(i in 1:length(Symbols)) {
-   
+
 	format(as.Date(from),"%d.%m.%Y")->mfd.from
 	format(as.Date(to),"%d.%m.%Y")->mfd.to
 	Symbols.name <- getSymbolLookup()[[Symbols[[i]]]]$name
@@ -556,16 +589,16 @@ function(Symbols,env,return.class='xts',index.class='Date',
 	 data("tickers")
 	 SYMBOL.GROUP<- tickers[which(tickers[,4]==Symbols),1]
 	 SYMBOL.ID<-tickers[which(tickers[,4]==Symbols),3]
-	 
+
        if (length(SYMBOL.ID)==0){
            if (verbose)
                 cat("Don't know about",Symbols[[i]],"\n\n")
            next
        }
 
-	 
+
 	 mfd.URL<-"http://mfd.ru/export/handler.ashx/Data.txt?"
-	 
+
 	 stock.URL <- paste(mfd.URL,
 	 "TickerGroup=",SYMBOL.GROUP,
 	 "&Tickers=",SYMBOL.ID,
@@ -575,25 +608,25 @@ function(Symbols,env,return.class='xts',index.class='Date',
 	 tmp <- tempfile()
      download.file(stock.URL, destfile=tmp,quiet=TRUE)
      fr <- read.table(tmp, sep=";",header=TRUE)
-       unlink(tmp)	 	 
+       unlink(tmp)
 	 if (p<7) {
-	 
-	 
+
+
 	 paste("0",as.character(fr[fr[,4]<100000 & fr[,4]>=10000,4]),sep="")->fr[fr[,4]<100000 & fr[,4]>=10000,4]
 	 paste("00",(fr[as.double(fr[,4])<10000 & as.double(fr[,4])>0,4]),sep="")->fr[as.double(fr[,4])<10000 & as.double(fr[,4])>0,4]
-	 paste("00000",(fr[fr[,4]=='0',4]),sep="")->fr[fr[,4]=='0',4]						
+	 paste("00000",(fr[fr[,4]=='0',4]),sep="")->fr[fr[,4]=='0',4]
      fr <- xts(apply(as.matrix(fr[,(5:10)]),2, as.numeric), as.POSIXct(strptime(paste(fr[,3],fr[,4]), "%Y%m%d %H%M%S")),src='mfd',updated=Sys.time())
 	             colnames(fr) <- paste(toupper(gsub('\\^','',Symbols.name)),
                              c('Open','High','Low','Close','Volume','OPEN_INTEREST'),
                              sep='.')
 							 }
 	 if (p>=7) {
-            
+
 fr <- xts(apply(as.matrix(fr[,(5:10)]),2, as.numeric), as.Date(strptime(fr[,3], "%Y%m%d")),src='mfd',updated=Sys.time())
 	             colnames(fr) <- paste(toupper(gsub('\\^','',Symbols.name)),
                              c('Open','High','Low','Close','Volume','OPEN_INTEREST'),
                              sep='.')}
-	
+
        fr <- convert.time.series(fr=fr,return.class=return.class)
        if(is.xts(fr) && p>7)
          indexClass(fr) <- index.class
@@ -605,11 +638,11 @@ fr <- xts(apply(as.matrix(fr[,(5:10)]),2, as.numeric), as.Date(strptime(fr[,3], 
          message("pausing 1 second between requests for more than 5 symbols")
          Sys.sleep(1)
        }
-	 }  
+	 }
      if(auto.assign)
        return(Symbols)
-	 
-	 if(exists('fr'))  
+
+	 if(exists('fr'))
 		return(fr)
 }
 
@@ -623,7 +656,7 @@ function (verbose = FALSE){
     ids <- sub("var .*?= \\[", "", fr[1])
     ids <- sub("\\];", "", ids)
     ids <- strsplit(ids, ",")
-	
+
 	markets <- sub("var .*?= \\[", "", fr[4])
     markets <- sub("\\];", "", markets)
     markets <- strsplit(markets, ",")
@@ -634,10 +667,10 @@ function (verbose = FALSE){
     names <- strsplit(names, ",")
 	names[[1]]->names
 	names[-(11414)]->names
-    res <- unlist(ids)	
+    res <- unlist(ids)
 	markets<-unlist(markets)
-	
-	
+
+
 	data<-data.frame(names[1:min(length(res),length(names))],res[1:min(length(res),length(names))],markets[1:min(length(res),length(names))])
 	data[data[,3]!=3,]->data
 	rbind(data[(data[,1]%in%data[data[,3]==1,1]) & data[,3]==1,],data[!(data[,1]%in%data[data[,3]==1,1]),])->data
@@ -646,55 +679,48 @@ function (verbose = FALSE){
     return(res)
 }
 
-#This one is taken from quanmod package since it's not available through the API
-"convert.time.series" <-
-function (fr, return.class)
-{
-    if ("quantmod.OHLC" %in% return.class) {
-        class(fr) <- c("quantmod.OHLC", "zoo")
-        return(fr)
+# This one is taken from quanmod package since it's not exported by quantmod
+#' @importFrom zoo as.zoo coredata
+#' @importFrom timeSeries timeSeries
+#' @importFrom stats as.ts
+#'
+`convert.time.series` <- function(fr,return.class) {
+  if('quantmod.OHLC' %in% return.class) {
+    class(fr) <- c('quantmod.OHLC','zoo')
+    return(fr)
+  } else
+    if('xts' %in% return.class) {
+      return(fr)
     }
-    else if ("xts" %in% return.class) {
-        return(fr)
-    }
-    if ("zoo" %in% return.class) {
-        return(as.zoo(fr))
-    }
-    else if ("ts" %in% return.class) {
-        fr <- as.ts(fr)
-        return(fr)
-    }
-    else if ("data.frame" %in% return.class) {
+  if('zoo' %in% return.class) {
+    return(as.zoo(fr))
+  } else
+    if('ts' %in% return.class) {
+      fr <- as.ts(fr)
+      return(fr)
+    } else
+      if('data.frame' %in% return.class) {
         fr <- as.data.frame(fr)
         return(fr)
-    }
-    else if ("matrix" %in% return.class) {
-        fr <- as.data.frame(fr)
-        return(fr)
-    }
-    else if ("its" %in% return.class) {
-        if ("package:its" %in% search() || suppressMessages(require("its",
-            quietly = TRUE))) {
-            fr.dates <- as.POSIXct(as.character(index(fr)))
-            fr <- its::its(coredata(fr), fr.dates)
-            return(fr)
-        }
-        else {
-            warning(paste("'its' from package 'its' could not be loaded:",
-                " 'xts' class returned"))
-        }
-    }
-    else if ("timeSeries" %in% return.class) {
-        if ("package:fSeries" %in% search() || suppressMessages(require("fSeries",  quietly = TRUE))) {
-            fr <- timeSeries(coredata(fr), charvec = as.character(index(fr)))
-            return(fr)
-        }
-        else {
-            warning(paste("'timeSeries' from package 'fSeries' could not be loaded:", " 'xts' class returned"))
-        }
-    }
+      } else
+        if('matrix' %in% return.class) {
+          fr <- as.data.frame(fr)
+          return(fr)
+        } else
+          if('timeSeries' %in% return.class) {
+            if(requireNamespace("timeSeries", quietly=TRUE)) {
+              fr <- timeSeries(coredata(fr), charvec=as.character(index(fr)))
+              return(fr)
+            } else {
+              warning(paste("'timeSeries' from package 'timeSeries' could not be loaded:",
+                            " 'xts' class returned"))
+            }
+          }
 }
 
+#' @rdname getSymbols
+#' @importFrom xts xts as.xts
+#' @export
 "getSymbols.Forts" <-
 function(Symbols,env,return.class='xts',index.class='Date',
          from='2007-01-01',
@@ -776,12 +802,11 @@ function(Symbols,env,return.class='xts',index.class='Date',
 
 }
 
-
+#' @export
 "select.hours" <-
 function(data, hour){
     return(data[format(index(data), format="%H")==hour])
 }
-
 
 http.get <- function(host, path, port=80, referer="", verbose=FALSE) {
 
