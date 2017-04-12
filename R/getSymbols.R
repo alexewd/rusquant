@@ -1,8 +1,8 @@
 #' @name getSymbols
 #' @title Load and manage market data
 #' @rdname getSymbols
-#' @usage getSymbols(Symbols = NULL, from='2007-01-01', to = Sys.Date(),
-#'                   src = "yahoo", period = "day")
+#' @usage getSymbols(Symbols, env, return.class = 'xts', index.class = 'Date',
+#' from = '2007-01-01', to = Sys.Date(), adjust = FALSE, period = 'day', ...)
 #' @description
 #' Function to load and manage data. Current src methods available are: yahoo,
 #' Finam, mfd, rogov, oanda, google. Current period methods available are:
@@ -25,6 +25,7 @@ NULL
 
 #' @rdname getSymbols
 #' @importFrom xts xts as.xts
+#' @importFrom quantmod importDefaults
 #' @export
 #function retrives data from poloniex through its public API
 "getSymbols.Poloniex" <-
@@ -71,41 +72,24 @@ NULL
   switch(
     period,
     #select candle period according to data frequency
-    '5min' = {
-      Polo.period <- 300
-    },
-    '15min' = {
-      Polo.period <- 900
-    },
-    '30min' = {
-      Polo.period <- 1800
-    },
-    '2hours' = {
-      Polo.period <- 7200
-    },
-    '4hours' = {
-      Polo.period <- 14400
-    },
-    'day' = {
-      Polo.period <- 86400
-    }
+    '5min' = {Polo.period <- 300},
+    '15min' = {Polo.period <- 900},
+    '30min' = {Polo.period <- 1800},
+    '2hours' = {Polo.period <- 7200},
+    '4hours' = {Polo.period <- 14400},
+    'day' = {Polo.period <- 86400}
   )
 
   #example API usage
   #"https://poloniex.com/public?command=returnChartData&currencyPair=USDT_BTC&period=7200&start=1468711470&end=1468757470"
 
   for (i in 1:length(Symbols)) {
-    Polo.url <- paste(
+    Polo.url <- paste0(
       Polo.downloadUrl,
-      "&currencyPair=",
-      Symbols[[i]],
-      "&period=",
-      Polo.period,
-      "&start=",
-      Polo.from,
-      "&end=",
-      Polo.to,
-      sep = ""
+      "&currencyPair=", Symbols[[i]],
+      "&period=", Polo.period,
+      "&start=", Polo.from,
+      "&end=", Polo.to
     )
     tmp <- tempfile()
     download.file(Polo.url, destfile = tmp, quiet = TRUE) #get JSON object
@@ -157,7 +141,6 @@ NULL
     if (auto.assign) {
       assign(Symbols[[i]], fr, env)
     }
-
   }
 
   if (auto.assign) {
@@ -170,6 +153,7 @@ NULL
 #' @rdname getSymbols
 #' @importFrom xts xts as.xts
 #' @importFrom utils read.table
+#' @importFrom quantmod importDefaults
 #' @export
 #function retrives data from alortrade broker
 "getSymbols.Alor" <-
@@ -215,33 +199,15 @@ NULL
   switch(
     period,
     #select candle period according to data frequency
-    'tick' = {
-      Alor.period <- 0
-    },
-    '1min' = {
-      Alor.period <- 1
-    },
-    '5min' = {
-      Alor.period <- 5
-    },
-    '10min' = {
-      Alor.period <- 10
-    },
-    '15min' = {
-      Alor.period <- 15
-    },
-    '20min' = {
-      Alor.period <- 20
-    },
-    '30min' = {
-      Alor.period <- 30
-    },
-    'hour' = {
-      Alor.period <- 60
-    },
-    'day' = {
-      Alor.period <- 1440
-    }
+    'tick' = {Alor.period <- 0},
+    '1min' = {Alor.period <- 1},
+    '5min' = {Alor.period <- 5},
+    '10min' = {Alor.period <- 10},
+    '15min' = {Alor.period <- 15},
+    '20min' = {Alor.period <- 20},
+    '30min' = {Alor.period <- 30},
+    'hour' = {Alor.period <- 60},
+    'day' = {Alor.period <- 1440}
   )
 
   #example of request
@@ -253,20 +219,14 @@ NULL
     #building request to a REST service
     #bypassing 1000 obs restriction
     repeat {
-      Alor.url <- paste(
+      Alor.url <- paste0(
         Alor.downloadUrl,
-        "board=",
-        board,
-        "&ticker=",
-        Symbols[[i]],
-        "&period=",
-        Alor.period,
-        "&from=",
-        Alor.from,
-        "&to=",
-        Alor.to,
-        "&bars=",
-        Alor.max_candles
+        "board=", board,
+        "&ticker=", Symbols[[i]],
+        "&period=", Alor.period,
+        "&from=", Alor.from,
+        "&to=", Alor.to,
+        "&bars=", Alor.max_candles
       )
 
       temp <- tempfile()
@@ -287,7 +247,6 @@ NULL
       if (!is.null(result)) {
         if (result$Date[1] == res$Date[nrow(res)]) {
           break
-
         }
       }
 
@@ -323,6 +282,7 @@ NULL
 
 #' @rdname getSymbols
 #' @importFrom xts xts as.xts
+#' @importFrom quantmod importDefaults
 #' @export
 "getSymbols.rogov" <-
   function(Symbols,
@@ -513,7 +473,7 @@ NULL
 
 #' @rdname getSymbols
 #' @importFrom xts xts as.xts is.xts indexClass<-
-#' @importFrom quantmod getSymbolLookup
+#' @importFrom quantmod getSymbolLookup importDefaults
 #' @export
 "getSymbols.Finam" <-
   function(Symbols,
@@ -544,26 +504,16 @@ NULL
 
     p <- 0
 
-    if ("tick" == period)
-      p <- 1
-    if ("1min" == period)
-      p <- 2
-    if ("5min" == period)
-      p <- 3
-    if ("10min" == period)
-      p <- 4
-    if ("15min" == period)
-      p <- 5
-    if ("30min" == period)
-      p <- 6
-    if ("hour" == period)
-      p <- 7
-    if ("day" == period)
-      p <- 8
-    if ("week" == period)
-      p <- 9
-    if ("month" == period)
-      p <- 10
+    if ("tick" == period) p <- 1
+    if ("1min" == period) p <- 2
+    if ("5min" == period) p <- 3
+    if ("10min" == period) p <- 4
+    if ("15min" == period) p <- 5
+    if ("30min" == period) p <- 6
+    if ("hour" == period) p <- 7
+    if ("day" == period) p <- 8
+    if ("week" == period) p <- 9
+    if ("month" == period) p <- 10
 
     if (p == 0) {
       message(paste("Unkown period ", period))
@@ -620,27 +570,17 @@ NULL
         next
       }
 
-      stock.URL <- paste(
+      stock.URL <- paste0(
         finam.URL,
-        "p=",
-        p,
-        "&em=",
-        Symbols.id,
-        "&df=",
-        from.d,
-        "&mf=",
-        from.m,
-        "&yf=",
-        from.y,
-        "&dt=",
-        to.d,
-        "&mt=",
-        to.m,
-        "&yt=",
-        to.y,
-        "&cn=",
-        Symbols.name,
-        sep = ''
+        "p=", p,
+        "&em=", Symbols.id,
+        "&df=", from.d,
+        "&mf=", from.m,
+        "&yf=", from.y,
+        "&dt=", to.d,
+        "&mt=", to.m,
+        "&yt=", to.y,
+        "&cn=", Symbols.name
       )
       if (verbose)
         cat(stock.URL)
@@ -715,8 +655,9 @@ NULL
         Sys.sleep(1)
       }
     }
-    if (auto.assign)
+    if (auto.assign) {
       return(Symbols)
+    }
 
     return(fr)
   }
@@ -724,6 +665,7 @@ NULL
 #' @rdname getSymbols
 #' @importFrom xts xts as.xts
 #' @importFrom utils data
+#' @importFrom quantmod importDefaults
 #' @export
 "getSymbols.mfd" <-
   function(Symbols,
@@ -754,26 +696,16 @@ NULL
 
     p <- -1
 
-    if ("tick" == period)
-      p <- 0
-    if ("1min" == period)
-      p <- 1
-    if ("5min" == period)
-      p <- 2
-    if ("10min" == period)
-      p <- 3
-    if ("15min" == period)
-      p <- 4
-    if ("30min" == period)
-      p <- 5
-    if ("hour" == period)
-      p <- 6
-    if ("day" == period)
-      p <- 7
-    if ("week" == period)
-      p <- 8
-    if ("month" == period)
-      p <- 9
+    if ("tick" == period) p <- 0
+    if ("1min" == period) p <- 1
+    if ("5min" == period) p <- 2
+    if ("10min" == period) p <- 3
+    if ("15min" == period) p <- 4
+    if ("30min" == period) p <- 5
+    if ("hour" == period) p <- 6
+    if ("day" == period) p <- 7
+    if ("week" == period) p <- 8
+    if ("month" == period) p <- 9
 
     if (p == -1) {
       message(paste("Unkown period ", period))
@@ -797,20 +729,14 @@ NULL
 
       mfd.URL <- "http://mfd.ru/export/handler.ashx/Data.txt?"
 
-      stock.URL <- paste(
+      stock.URL <- paste0(
         mfd.URL,
-        "TickerGroup=",
-        SYMBOL.GROUP,
-        "&Tickers=",
-        SYMBOL.ID,
-        "&Alias=false&Period=",
-        p,
-        "&timeframeValue=1&timeframeDatePart=day&StartDate=",
-        mfd.from,
-        "&EndDate=",
-        mfd.to,
-        "&SaveFormat=0&SaveMode=0&FileName=Date18112013_23112013.txt&FieldSeparator=%253b&DecimalSeparator=.&DateFormat=yyyyMMdd&TimeFormat=HHmmss&DateFormatCustom=&TimeFormatCustom=&AddHeader=true&RecordFormat=0&Fill=false",
-        sep = ""
+        "TickerGroup=", SYMBOL.GROUP,
+        "&Tickers=", SYMBOL.ID,
+        "&Alias=false&Period=", p,
+        "&timeframeValue=1&timeframeDatePart=day&StartDate=", mfd.from,
+        "&EndDate=", mfd.to,
+        "&SaveFormat=0&SaveMode=0&FileName=Date18112013_23112013.txt&FieldSeparator=%253b&DecimalSeparator=.&DateFormat=yyyyMMdd&TimeFormat=HHmmss&DateFormatCustom=&TimeFormatCustom=&AddHeader=true&RecordFormat=0&Fill=false"
       )
       tmp <- tempfile()
       download.file(stock.URL, destfile = tmp, quiet = TRUE)
@@ -865,11 +791,119 @@ NULL
         Sys.sleep(1)
       }
     }
-    if (auto.assign)
+    if (auto.assign) {
       return(Symbols)
+    }
 
-    if (exists('fr'))
+    if (exists('fr')) {
       return(fr)
+    }
+  }
+
+#' @rdname getSymbols
+#' @importFrom xts xts as.xts is.xts
+#' @importFrom utils download.file
+#' @importFrom quantmod importDefaults
+#' @export
+"getSymbols.Forts" <-
+  function(Symbols,
+           env,
+           return.class = 'xts',
+           index.class = 'Date',
+           from = '2007-01-01',
+           to = Sys.Date(),
+           adjust = FALSE,
+           period = 'day',
+           ...)
+  {
+    importDefaults("getSymbols.Forts")
+    this.env <- environment()
+    for (var in names(list(...))) {
+      # import all named elements that are NON formals
+      assign(var, list(...)[[var]], this.env)
+    }
+
+    default.return.class <- return.class
+    default.from <- from
+    default.to <- to
+
+    if (missing(verbose))
+      verbose <- FALSE
+    if (missing(auto.assign))
+      auto.assign <- FALSE
+
+    forts.URL <-
+      "http://www.rts.ru/ru/forts/contractresults-exp.html?"
+
+    for (i in 1:length(Symbols)) {
+      return.class <- getSymbolLookup()[[Symbols[[i]]]]$return.class
+      return.class <-
+        ifelse(is.null(return.class),
+               default.return.class,
+               return.class)
+      from <- getSymbolLookup()[[Symbols[[i]]]]$from
+      from <- if (is.null(from))
+        default.from
+      else
+        from
+      to <- getSymbolLookup()[[Symbols[[i]]]]$to
+      to <- if (is.null(to))
+        default.to
+      else
+        to
+
+      from.f <- format(as.Date(from, origin = '1970-01-01'), '%Y%m%d')
+      to.f <- format(as.Date(to, origin = '1970-01-01'), '%Y%m%d')
+
+      Symbols.name <- getSymbolLookup()[[Symbols[[i]]]]$name
+      Symbols.name <-
+        ifelse(is.null(Symbols.name), Symbols[[i]], Symbols.name)
+      if (verbose)
+        cat("downloading ", Symbols.name, ".....\n\n")
+
+      tmp <- tempfile()
+      stock.URL <- paste0(
+        forts.URL,
+        "day1=", from.f,
+        "&day2=", to.f,
+        "&isin=", gsub(' ', '%20', Symbols.name)
+      )
+
+      download.file(stock.URL, destfile = tmp, quiet = !verbose)
+
+      fr <- read.csv(tmp, as.is = TRUE, skip = 1)
+      unlink(tmp)
+
+      if (verbose)
+        cat("done.\n")
+
+      fr <-
+        xts(as.matrix(cbind(fr[, (4:7)], fr[, 12], fr[, 14])),
+            as.Date(strptime(fr[, 1], "%d.%m.%Y")),
+            src = 'forts',
+            updated = Sys.time())
+
+      colnames(fr) <- paste(toupper(gsub('[ -.]', '', Symbols.name)),
+                            c('Open', 'High', 'Low', 'Close', 'Volume', 'Positions'),
+                            sep = '.')
+
+      fr <- convert.time.series(fr = fr, return.class = return.class)
+      if (is.xts(fr))
+        indexClass(fr) <- index.class
+
+      Symbols[[i]] <- toupper(gsub('[ -.]', '', Symbols[[i]]))
+      if (auto.assign)
+        assign(Symbols[[i]], fr, env)
+      if (i >= 5 && length(Symbols) > 5) {
+        message("pausing 1 second between requests for more than 5 symbols")
+        Sys.sleep(1)
+      }
+    }
+    if (auto.assign) {
+      return(Symbols)
+    }
+
+    return(fr)
   }
 
 "loadStockList" <-
@@ -951,115 +985,6 @@ NULL
             }
           }
 }
-
-#' @rdname getSymbols
-#' @importFrom xts xts as.xts is.xts
-#' @importFrom utils download.file
-#' @export
-"getSymbols.Forts" <-
-  function(Symbols,
-           env,
-           return.class = 'xts',
-           index.class = 'Date',
-           from = '2007-01-01',
-           to = Sys.Date(),
-           adjust = FALSE,
-           period = 'day',
-           ...)
-  {
-    importDefaults("getSymbols.Forts")
-    this.env <- environment()
-    for (var in names(list(...))) {
-      # import all named elements that are NON formals
-      assign(var, list(...)[[var]], this.env)
-    }
-
-    default.return.class <- return.class
-    default.from <- from
-    default.to <- to
-
-    if (missing(verbose))
-      verbose <- FALSE
-    if (missing(auto.assign))
-      auto.assign <- FALSE
-
-    forts.URL <-
-      "http://www.rts.ru/ru/forts/contractresults-exp.html?"
-
-    for (i in 1:length(Symbols)) {
-      return.class <- getSymbolLookup()[[Symbols[[i]]]]$return.class
-      return.class <-
-        ifelse(is.null(return.class),
-               default.return.class,
-               return.class)
-      from <- getSymbolLookup()[[Symbols[[i]]]]$from
-      from <- if (is.null(from))
-        default.from
-      else
-        from
-      to <- getSymbolLookup()[[Symbols[[i]]]]$to
-      to <- if (is.null(to))
-        default.to
-      else
-        to
-
-      from.f <- format(as.Date(from, origin = '1970-01-01'), '%Y%m%d')
-      to.f <- format(as.Date(to, origin = '1970-01-01'), '%Y%m%d')
-
-      Symbols.name <- getSymbolLookup()[[Symbols[[i]]]]$name
-      Symbols.name <-
-        ifelse(is.null(Symbols.name), Symbols[[i]], Symbols.name)
-      if (verbose)
-        cat("downloading ", Symbols.name, ".....\n\n")
-
-      tmp <- tempfile()
-      stock.URL <- paste(
-        forts.URL,
-        "day1=",
-        from.f,
-        "&day2=",
-        to.f,
-        "&isin=",
-        gsub(' ', '%20', Symbols.name),
-        sep = ''
-      )
-
-      download.file(stock.URL, destfile = tmp, quiet = !verbose)
-
-      fr <- read.csv(tmp, as.is = TRUE, skip = 1)
-      unlink(tmp)
-
-      if (verbose)
-        cat("done.\n")
-
-      fr <-
-        xts(as.matrix(cbind(fr[, (4:7)], fr[, 12], fr[, 14])),
-            as.Date(strptime(fr[, 1], "%d.%m.%Y")),
-            src = 'forts',
-            updated = Sys.time())
-
-      colnames(fr) <- paste(toupper(gsub('[ -.]', '', Symbols.name)),
-                            c('Open', 'High', 'Low', 'Close', 'Volume', 'Positions'),
-                            sep = '.')
-
-      fr <- convert.time.series(fr = fr, return.class = return.class)
-      if (is.xts(fr))
-        indexClass(fr) <- index.class
-
-      Symbols[[i]] <- toupper(gsub('[ -.]', '', Symbols[[i]]))
-      if (auto.assign)
-        assign(Symbols[[i]], fr, env)
-      if (i >= 5 && length(Symbols) > 5) {
-        message("pausing 1 second between requests for more than 5 symbols")
-        Sys.sleep(1)
-      }
-    }
-    if (auto.assign)
-      return(Symbols)
-
-    return(fr)
-
-  }
 
 #' @export
 "select.hours" <-
