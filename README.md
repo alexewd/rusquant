@@ -1,4 +1,4 @@
-# rusquant
+# rusquant [![Build Status](https://travis-ci.org/tonytonov/rusquant.svg)](https://travis-ci.org/tonytonov/rusquant)
 Official version of rusquant package for R.
 
 This is an extension for quantmod framework to simplify working with Russian stock market. Adds additional datas to work with MOEX (Moscow Exchange) using finam.ru and mfd.ru datasources.
