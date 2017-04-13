@@ -348,16 +348,11 @@ NULL
       rogov.URL <-
         "http://www.rogovindex.com/Quote/searchentries?rogovindex.period="
       stock.URL <-
-        paste(
-          rogov.URL,
-          p,
-          "&limit=",
-          limit,
-          "&RegionFromDate=",
-          rogov.from,
-          "&regiontodate=",
-          rogov.to,
-          sep = ""
+        paste0(
+          rogov.URL, p,
+          "&limit=", limit,
+          "&RegionFromDate=", rogov.from,
+          "&regiontodate=", rogov.to
         )
       tmp <- tempfile()
       download.file(stock.URL, destfile = tmp, quiet = TRUE)
@@ -393,7 +388,7 @@ NULL
           xts(
             apply(as.matrix(fr[, 2:6]), 2, as.numeric),
             as.Date(strptime(
-              paste("01/", fr[, 1], sep = ""), "%d/%m/%Y"
+              paste0("01/", fr[, 1]), "%d/%m/%Y"
             )),
             src = 'rogov',
             updated = Sys.time()
@@ -407,7 +402,7 @@ NULL
           xts(
             apply(as.matrix(fr[, 2:6]), 2, as.numeric),
             as.Date(strptime(
-              paste("01/01/", fr[, 1], sep = ""), "%d/%m/%Y"
+              paste0("01/01/", fr[, 1]), "%d/%m/%Y"
             )),
             src = 'rogov',
             updated = Sys.time()
@@ -590,14 +585,14 @@ NULL
         lts <-
           http.get(
             finam.HOST,
-            paste(stock.URL, '&datf=6', sep = ''),
+            paste0(stock.URL, '&datf=6'),
             referer = 'http://www.finam.ru/analysis/export/default.asp',
             verbose = verbose
           )
         write(lts, file = tmp)
       } else {
         stock.URL <-
-          paste('http://', finam.HOST, stock.URL, '&datf=1' , sep = '')
+          paste0('http://', finam.HOST, stock.URL, '&datf=1')
         download.file(stock.URL,
                       destfile = tmp,
                       quiet = !verbose)
@@ -743,14 +738,13 @@ NULL
       fr <- read.table(tmp, sep = ";", header = TRUE)
       unlink(tmp)
       if (p < 7) {
-        paste("0", as.character(fr[fr[, 4] < 100000 &
-                                     fr[, 4] >= 10000, 4]), sep = "") -> fr[fr[, 4] < 100000 &
+        paste0("0", as.character(fr[fr[, 4] < 100000 &
+                                     fr[, 4] >= 10000, 4])) -> fr[fr[, 4] < 100000 &
                                                                               fr[, 4] >= 10000, 4]
-        paste("00", (fr[as.double(fr[, 4]) < 10000 &
-                          as.double(fr[, 4]) > 0, 4]), sep = "") -> fr[as.double(fr[, 4]) < 10000 &
+        paste0("00", (fr[as.double(fr[, 4]) < 10000 &
+                          as.double(fr[, 4]) > 0, 4])) -> fr[as.double(fr[, 4]) < 10000 &
                                                                          as.double(fr[, 4]) > 0, 4]
-        paste("00000", (fr[fr[, 4] == '0', 4]), sep = "") -> fr[fr[, 4] ==
-                                                                  '0', 4]
+        paste0("00000", (fr[fr[, 4] == '0', 4])) -> fr[fr[, 4] == '0', 4]
         fr <-
           xts(
             apply(as.matrix(fr[, (5:10)]), 2, as.numeric),
@@ -1004,7 +998,7 @@ http.get <-
       stop("No host URL provided")
 
     header <- NULL
-    header <- c(header, paste("GET ", path, " HTTP/1.0\r\n", sep = ""))
+    header <- c(header, paste0("GET ", path, " HTTP/1.0\r\n"))
     header <-
       c(
         header,
@@ -1012,9 +1006,9 @@ http.get <-
       )
     header <- c(header, "Accept: */*\r\n")
     header <- c(header, "Accept-Encoding: deflate\r\n")
-    header <- c(header, paste("Referer: ", referer, "\r\n", sep = ""))
+    header <- c(header, paste0("Referer: ", referer, "\r\n"))
 
-    request <- paste(header, sep = "", collapse = "")
+    request <- paste0(header, collapse = "")
 
     if (verbose) {
       cat("Sending HTTP GET request to ", host, ":", port, "\n")

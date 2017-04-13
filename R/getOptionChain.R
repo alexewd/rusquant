@@ -12,19 +12,13 @@
     dlv <- format(as.Date(Exp, origin = '1970-01-01'), '%d-%m-%y')
 
     sid <- 1
-    if ('EVENING' == session) {
-      sid <- 2
-    }
+    if ('EVENING' == session) { sid <- 2 }
 
     tmp <- tempfile()
-    stock.URL <- paste(forts.URL,
-                       "&code=",
-                       Symbols,
-                       "&sid=",
-                       sid,
-                       "&delivery=",
-                       dlv,
-                       sep = '')
+    stock.URL <- paste0(forts.URL,
+                       "&code=", Symbols,
+                       "&sid=", sid,
+                       "&delivery=", dlv)
     download.file(stock.URL, destfile = tmp, quiet = !verbose)
 
     fr <- read.csv(tmp, as.is = TRUE, skip = 1)
@@ -32,9 +26,9 @@
 
     dlv <- format(as.Date(Exp, origin = '1970-01-01'), '%d%m%y')
     cnames <-
-      paste(gsub('[ -.]', '', Symbols), dlv, 'CA', fr[, 10], sep = '')
+      paste0(gsub('[ -.]', '', Symbols), dlv, 'CA', fr[, 10])
     rnames <-
-      paste(gsub('[ -.]', '', Symbols), dlv, 'PA', fr[, 10], sep = '')
+      paste0(gsub('[ -.]', '', Symbols), dlv, 'PA', fr[, 10])
 
     calls <- as.matrix(fr[, c(10, 4, 6, 7, 8, 1, 3, 11)])
     puts <-  as.matrix(fr[, c(10, 15, 17, 13, 14, 19, 18, 11)])
