@@ -1,12 +1,17 @@
 Package: rusquant
 Type: Package
-Title: Financial Modelling Framework extension for Russian stock market
+Title: Quantitative Financial Modelling and Trading Framework extension for Russian stock market
 Version: 0.4-7
 Date: 2017-04-13
+Authors@R: c(person("Sergey", "Edunov", role = c("aut"),
+                     email = "edunov@gmail.com"),
+             person("Vyacheslav", "Arbuzov", role = c("aut"),
+                     email = "arbuzov1989@gmail.com"),
+             person("Anton", "Antonov", role = c("aut", "cre"),
+                     email = "tonytonov@gmail.com"))
 Author: Sergey Edunov, Vyacheslav Arbuzov, Anton Antonov
 Depends: R (>= 2.10)
-Imports: quantmod, xts, zoo, timeSeries
-Maintainer: Sergey Edunov <edunov@gmail.com>, Vyacheslav Arbuzov <arbuzov1989@gmail.com>, Anton Antonov <arbuzov1989@gmail.com>
+Imports: quantmod, xts(>= 0.9-0), zoo, timeSeries
 Description: This is an extension for quantmod framework to simplify working with Russian stock market.
 LazyData: true
 License: GPL-3
